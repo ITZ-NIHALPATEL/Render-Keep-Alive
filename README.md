@@ -31,6 +31,8 @@
 
 Show your support by starring the repository or forking it to set up your own keep-alive service!
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ITZ-NIHALPATEL/Render-Keep-Alive)
+
 [![Fork](https://img.shields.io/badge/Fork_This_Repo-238636?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ITZ-NIHALPATEL/Render-Keep-Alive/fork)
 [![Star](https://img.shields.io/badge/Star_This_Repo-D29922?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ITZ-NIHALPATEL/Render-Keep-Alive/stargazers)
 
@@ -43,7 +45,9 @@ Show your support by starring the repository or forking it to set up your own ke
 - [About the Project](#-about-the-project)
 - [Screenshots](#-screenshots)
 - [Features](#-features)
-- [Installation / Setup](#️-installation--setup)
+- [Deploy — Two Ways](#-deploy--two-ways)
+  - [Method 1: One-Click Deploy (Fastest)](#-method-1-one-click-deploy-fastest)
+  - [Method 2: Fork & Customize](#-method-2-fork--customize)
 - [Telegram Notifications Setup](#-telegram-notifications-setup)
 - [Environment Variables](#-environment-variables)
 - [Usage](#-usage)
@@ -84,6 +88,7 @@ Instant Telegram notifications with site URL, status, and UTC timestamp when a s
 
 ## ✨ Features
 
+- **🚀 One-Click Deploy** — Deploy directly to Render with a single button click. Just set your env vars and go.
 - **⚡ Concurrent Pinging** — All sites are pinged at the same time using Python's `ThreadPoolExecutor`, not one-by-one.
 - **🔄 Smart Retry Logic** — 2 automatic retries with a 5-second delay to avoid false positives from temporary network blips.
 - **📱 Telegram Alerts** — Instant notification via Telegram bot when any site is confirmed down after retries.
@@ -91,11 +96,38 @@ Instant Telegram notifications with site URL, status, and UTC timestamp when a s
 - **🔁 Self-Ping** — Pings its own URL to prevent Render from spinning down the pinger itself.
 - **🌐 Health Endpoint** — Built-in web server serves a JSON health check at `/` with latest ping results.
 - **📦 Zero Dependencies** — Uses only Python standard library (`urllib`, `threading`, `concurrent.futures`). No `pip install` needed.
+- **🔧 Flexible Config** — Provide site URLs via `SITES` env var (comma-separated) or `sites.json` file — or both.
 - **🔐 .env Support** — Built-in `.env` file loader for local development. On Render, use environment variables directly.
 
 ---
 
-## 🛠️ Installation / Setup
+## 🛠️ Deploy — Two Ways
+
+Choose the method that works best for you:
+
+### 🚀 Method 1: One-Click Deploy (Fastest)
+
+The quickest way to get started — no forking, no file editing. Just click, configure, and deploy.
+
+1. **Click the button below** to deploy directly to Render:
+
+   [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ITZ-NIHALPATEL/Render-Keep-Alive)
+
+2. **Set environment variables** when prompted:
+   - `SELF_URL` — Will be your new service's URL (set after first deploy, then redeploy)
+   - `SITES` — Comma-separated list of URLs to keep alive:
+     ```
+     https://your-app1.onrender.com,https://your-app2.onrender.com
+     ```
+   - `TELEGRAM_TOKEN` & `TELEGRAM_CHAT_ID` — *(optional)* for downtime alerts
+
+3. **Done!** Your pinger is live. Update `SELF_URL` with your service's URL and redeploy.
+
+> **💡 Tip:** With this method, all your sites are managed through the `SITES` environment variable in the Render dashboard. No files to edit — ever.
+
+### 🍴 Method 2: Fork & Customize
+
+Best if you want full control over the repository and prefer managing sites via a config file.
 
 1. **Fork the Repository** by clicking the "Fork" button at the top right of this page.
 
@@ -103,8 +135,8 @@ Instant Telegram notifications with site URL, status, and UTC timestamp when a s
 
    ```json
    [
-     "https://your-app.onrender.com",
-     "https://app.onrender.com"
+     "https://your-app1.onrender.com",
+     "https://your-app2.onrender.com"
    ]
    ```
 
@@ -116,6 +148,8 @@ Instant Telegram notifications with site URL, status, and UTC timestamp when a s
    - **Plan**: `Free`
 
 4. **Set Environment Variables** in the Render dashboard (see [Environment Variables](#-environment-variables)).
+
+> **💡 Tip:** You can also set the `SITES` env var alongside `sites.json` — both sources are merged automatically (duplicates removed).
 
 ---
 
@@ -141,9 +175,12 @@ Set these in the **Render Dashboard** → your service → **Environment**:
 | Variable           | Required | Description                                                                 |
 | ------------------ | -------- | --------------------------------------------------------------------------- |
 | `SELF_URL`         | **Yes**  | Your Render service's own URL (e.g. `https://render-keep-alive-xxxx.onrender.com`). Enables self-ping to stay alive. |
+| `SITES`            | **Yes***  | Comma-separated URLs to keep alive (e.g. `https://app1.onrender.com,https://app2.onrender.com`). Required for one-click deploy. |
 | `TELEGRAM_TOKEN`   | Optional | Telegram bot token from [@BotFather](https://t.me/BotFather).              |
 | `TELEGRAM_CHAT_ID` | Optional | Chat ID where alerts are sent.                                             |
 | `PORT`             | Auto     | Render sets this automatically. No need to configure.                       |
+
+> **\*** `SITES` is required if you're using one-click deploy. If you forked the repo and added URLs to `sites.json`, then `SITES` is optional.
 
 > **Tip:** For local development, create a `.env` file in the project root. The script loads it automatically.
 
@@ -153,8 +190,9 @@ Set these in the **Render Dashboard** → your service → **Environment**:
 
 Once deployed and configured, the service runs fully autonomously:
 
-- **Automatic** — Pings all sites from `sites.json` every **10 minutes**, forever.
+- **Automatic** — Pings all sites from `SITES` env var and/or `sites.json` every **10 minutes**, forever.
 - **Self-sustaining** — The `SELF_URL` self-ping keeps the pinger itself from sleeping on Render's free tier.
+- **Add or Remove Sites** — Update the `SITES` env var in Render dashboard (one-click deploy) or edit `sites.json` and push (fork deploy).
 - **Health Check** — Visit your service URL in a browser to see a live JSON report:
 
   ```json
@@ -166,8 +204,8 @@ Once deployed and configured, the service runs fully autonomously:
     "up": 3,
     "down": 0,
     "results": [
-      { "url": "https://your-app.onrender.com", "status": "up", "code": 200, "latency_ms": 285.3 },
-      { "url": "https://app.onrender.com", "status": "up", "code": 200, "latency_ms": 312.7 }
+      { "url": "https://your-app1.onrender.com", "status": "up", "code": 200, "latency_ms": 285.3 },
+      { "url": "https://your-app2.onrender.com", "status": "up", "code": 200, "latency_ms": 312.7 }
     ]
   }
   ```
@@ -177,7 +215,7 @@ Once deployed and configured, the service runs fully autonomously:
 ## ⚙️ How It Works
 
 1. **Startup** — `Ping.py` starts a web server on the port Render provides and spawns a background pinger thread.
-2. **Load Sites** — Reads all URLs from `sites.json` and appends `SELF_URL` (if set) to the list.
+2. **Load Sites** — Merges URLs from the `SITES` env var and `sites.json` file (duplicates removed), then appends `SELF_URL` (if set).
 3. **Concurrent Ping** — Every 10 minutes, all sites are pinged **simultaneously** using `ThreadPoolExecutor`. Each request uses a GET method with a 10-second timeout.
 4. **Retry on Failure** — If a site fails, it retries up to **2 more times** with a 5-second delay between attempts.
 5. **Alert** — If all retries fail, a Telegram alert is sent with the site URL, status, and timestamp.
@@ -191,7 +229,8 @@ Once deployed and configured, the service runs fully autonomously:
 ```
 Render-Keep-Alive/
 ├── Ping.py              # Main script — web server + background pinger
-├── sites.json           # List of URLs to keep alive
+├── render.yaml          # Render Blueprint — enables one-click deploy
+├── sites.json           # List of URLs to keep alive (fork-based deploy)
 ├── .env.example         # Example environment variables
 ├── Screenshots/         # README screenshots
 │   ├── Logs.png

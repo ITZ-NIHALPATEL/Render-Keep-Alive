@@ -1,16 +1,23 @@
 """
 Render Keep-Alive Pinger
 ~~~~~~~~~~~~~~~~~~~~~~~~
-Pings ALL sites from sites.json concurrently every 10 minutes.
+Pings ALL sites concurrently every 10 minutes.
 Sends Telegram alerts when a site is confirmed down after retries.
 
 Deploy this on Render as a free web service — the background thread
 pings all your other services (and itself) every 10 min, so nothing
 ever spins down.
 
+Site list (use ONE or BOTH):
+  SITES             – Comma-separated URLs     (ideal for one-click deploy)
+  sites.json        – JSON array of URLs       (ideal for fork-based deploy)
+
+  When both are provided, the lists are merged (duplicates removed).
+
 Environment variables:
   PORT              – Web server port         (Render sets this automatically)
   SELF_URL          – This service's own URL   (set to your Render URL)
+  SITES             – Comma-separated URLs     (alternative to sites.json)
   TELEGRAM_TOKEN    – Bot token for alerts     (optional)
   TELEGRAM_CHAT_ID  – Chat ID for alerts       (optional)
 """
@@ -76,12 +83,46 @@ def ts():
 
 
 def load_sites():
-    with open(SITES_FILE, "r", encoding="utf-8") as f:
-        sites = json.load(f)
-    if not isinstance(sites, list) or not sites:
-        raise ValueError("sites.json must be a non-empty JSON array")
+    """
+    Build the site list from two possible sources:
+      1. SITES env var  – comma-separated URLs  (one-click deploy)
+      2. sites.json     – JSON array of URLs    (fork-based deploy)
+    Both sources are merged; duplicates are removed.
+    """
+    sites = []
 
-    # Add self URL if set (keeps THIS service alive on Render)
+    # ── Source 1: SITES environment variable ──────────────────── #
+    env_sites = os.environ.get("SITES", "").strip()
+    if env_sites:
+        for url in env_sites.split(","):
+            url = url.strip()
+            if url and url not in sites:
+                sites.append(url)
+        print(f"  📋 Loaded {len(sites)} site(s) from SITES env var")
+
+    # ── Source 2: sites.json file ─────────────────────────────── #
+    if os.path.exists(SITES_FILE):
+        try:
+            with open(SITES_FILE, "r", encoding="utf-8") as f:
+                file_sites = json.load(f)
+            if isinstance(file_sites, list):
+                added = 0
+                for url in file_sites:
+                    if isinstance(url, str) and url.strip() and url.strip() not in sites:
+                        sites.append(url.strip())
+                        added += 1
+                if added:
+                    print(f"  📋 Loaded {added} additional site(s) from sites.json")
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"  ⚠️ Could not read sites.json: {e}")
+
+    if not sites:
+        raise ValueError(
+            "No sites configured! Set the SITES env var (comma-separated URLs) "
+            "or add URLs to sites.json."
+        )
+
+    # ── Self-ping (keeps THIS service alive on Render) ────────── #
     if SELF_URL and SELF_URL not in sites:
         sites.append(SELF_URL)
 
