@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🚀 Uptime Pinger
+# 🚀 Render Keep-Alive
 
-**Prevent your free-tier web services from sleeping with automated, parallel pinging and instant Telegram alerts.**
+**Prevent your free-tier Render services from sleeping with automated, concurrent pinging and instant Telegram alerts.**
 
 <!-- GitHub Badges -->
 
@@ -19,17 +19,17 @@
 <!-- Tech Stack Badges -->
 
 <p>
-  <a href="https://github.com/features/actions"><img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white&cacheSeconds=0" alt="GitHub Actions"/></a>
-  <a href="https://www.gnu.org/software/bash/"><img src="https://img.shields.io/badge/Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white&cacheSeconds=0" alt="Bash script"/></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white&cacheSeconds=0" alt="Python"/></a>
+  <a href="https://render.com/"><img src="https://img.shields.io/badge/Render-000000?style=for-the-badge&logo=render&logoColor=white&cacheSeconds=0" alt="Render"/></a>
   <a href="https://www.json.org/"><img src="https://img.shields.io/badge/JSON-000000?style=for-the-badge&logo=json&logoColor=white&cacheSeconds=0" alt="JSON"/></a>
-  <a href="https://curl.se/"><img src="https://img.shields.io/badge/cURL-073551?style=for-the-badge&logo=curl&logoColor=white&cacheSeconds=0" alt="cURL"/></a>
+  <a href="https://core.telegram.org/bots/api"><img src="https://img.shields.io/badge/Telegram_Bot-26A5E4?style=for-the-badge&logo=telegram&logoColor=white&cacheSeconds=0" alt="Telegram Bot"/></a>
 </p>
 
 ---
 
-### Support the Project
+### ⭐ Support the Project
 
-Show your support by starring the repository or forking it to set up your own uptime monitor!
+Show your support by starring the repository or forking it to set up your own keep-alive service!
 
 [![Fork](https://img.shields.io/badge/Fork_This_Repo-238636?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ITZ-NIHALPATEL/Render-Keep-Alive/fork)
 [![Star](https://img.shields.io/badge/Star_This_Repo-D29922?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ITZ-NIHALPATEL/Render-Keep-Alive/stargazers)
@@ -43,10 +43,12 @@ Show your support by starring the repository or forking it to set up your own up
 - [About the Project](#-about-the-project)
 - [Screenshots](#-screenshots)
 - [Features](#-features)
-- [Installation / Setup](#-installation--setup)
+- [Installation / Setup](#️-installation--setup)
 - [Telegram Notifications Setup](#-telegram-notifications-setup)
+- [Environment Variables](#-environment-variables)
 - [Usage](#-usage)
-- [How It Works](#-how-it-works)
+- [How It Works](#️-how-it-works)
+- [Project Structure](#-project-structure)
 - [Contributing](#-contributing)
 - [License](#-license)
 
@@ -54,116 +56,149 @@ Show your support by starring the repository or forking it to set up your own up
 
 ## 🎯 About the Project
 
-Free-tier hosting services like Render often put your web applications to sleep after a period of inactivity. This GitHub Actions workflow solves the problem by continuously pinging your specified endpoints, keeping them "awake." If any of your services go down or fail to respond, the script immediately alerts you via Telegram.
+Free-tier hosting services like **Render** automatically spin down your web applications after 15 minutes of inactivity. This project solves that by deploying a lightweight Python pinger as its own Render web service — it continuously pings all your endpoints **concurrently** every 10 minutes, keeping them alive 24/7. If any service goes down, you receive an **instant Telegram alert**.
 
-<p>
-  <img src="https://img.shields.io/github/actions/workflow/status/ITZ-NIHALPATEL/Render-Keep-Alive/uptime-pinger.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=Uptime%20Pinger%20Status&cacheSeconds=0" alt="Workflow Status" />
-</p>
+The pinger also pings **itself** via the `SELF_URL` environment variable, creating a self-sustaining loop that prevents its own Render service from ever spinning down.
 
 ---
 
 ## 📸 Screenshots
 
-### GitHub Actions Workflow Summary
+### Render Service Logs
 
-The workflow runs parallel ping jobs for each site and provides a clear summary with UP/DOWN status indicators.
+Real-time logs showing concurrent pings with status codes and latency for each site.
 
 <p align="center">
-  <img src="Screenshots/Summary.png" width="800" alt="GitHub Actions Workflow Summary" />
+  <img src="Screenshots/Logs.png" width="800" alt="Render Service Logs" />
 </p>
 
 ### Telegram Downtime Alert
 
-Instant Telegram notifications with site URL, HTTP status code, and UTC timestamp when a service goes down.
+Instant Telegram notifications with site URL, status, and UTC timestamp when a service goes down.
 
 <p align="center">
-  <img src="Screenshots/TelegramNotification.jpg" width="350" alt="Telegram Downtime Alert" />
+  <img src="Screenshots/TelegramNotification.png" width="350" alt="Telegram Downtime Alert" />
 </p>
 
 ---
 
 ## ✨ Features
 
-- **⚡ Parallel Pinging**: Utilizes GitHub Actions matrix strategy to ping multiple websites concurrently for maximum efficiency without failing the entire workflow on a single error.
-- **🔄 Smart Retry Logic**: Built-in 2-retry mechanism with a 5-second delay to avoid false positives caused by temporary network blips.
-- **📱 Telegram Alerts**: Instantly notifies you on Telegram via a customized bot message the moment your website is unresponsive.
-- **⏱️ Automated Checkups**: Runs automatically every 10 minutes via cron schedule.
-- **🖱️ Manual Trigger**: Supports `workflow_dispatch` so you can manually trigger a ping check anytime through the GitHub UI.
+- **⚡ Concurrent Pinging** — All sites are pinged at the same time using Python's `ThreadPoolExecutor`, not one-by-one.
+- **🔄 Smart Retry Logic** — 2 automatic retries with a 5-second delay to avoid false positives from temporary network blips.
+- **📱 Telegram Alerts** — Instant notification via Telegram bot when any site is confirmed down after retries.
+- **⏱️ Runs Forever** — Pings every 10 minutes in an infinite loop. No cron jobs, no external schedulers.
+- **🔁 Self-Ping** — Pings its own URL to prevent Render from spinning down the pinger itself.
+- **🌐 Health Endpoint** — Built-in web server serves a JSON health check at `/` with latest ping results.
+- **📦 Zero Dependencies** — Uses only Python standard library (`urllib`, `threading`, `concurrent.futures`). No `pip install` needed.
+- **🔐 .env Support** — Built-in `.env` file loader for local development. On Render, use environment variables directly.
 
 ---
 
 ## 🛠️ Installation / Setup
 
-1. **Fork the Repository** clicking the prominent "Fork" button at the top right of this page.
-2. In your forked repository, edit the `sites.json` file on the main branch.
-3. List the complete URLs you want to monitor in JSON array format.
+1. **Fork the Repository** by clicking the "Fork" button at the top right of this page.
 
-### 📝 Example `sites.json`
+2. **Edit `sites.json`** in your forked repository — list the URLs you want to keep alive:
 
-```json
-[
-  "https://your-app.onrender.com",
-  "https://my-awesome-api.onrender.app",
-  "https://personal-portfolio.com"
-]
-```
+   ```json
+   [
+     "https://your-app.onrender.com",
+     "https://app.onrender.com"
+   ]
+   ```
+
+3. **Create a new Web Service** on [Render](https://render.com):
+   - Connect your forked GitHub repository
+   - **Runtime**: `Python`
+   - **Build Command**: `echo "No build step"`
+   - **Start Command**: `python Ping.py`
+   - **Plan**: `Free`
+
+4. **Set Environment Variables** in the Render dashboard (see [Environment Variables](#-environment-variables)).
 
 ---
 
 ## 🔔 Telegram Notifications Setup
 
-To receive downtime alerts, you need to set up two GitHub Secrets for your repository.
+To receive downtime alerts via Telegram:
 
-1. Go to your GitHub repository.
-2. Navigate to **Settings** → **Secrets and variables** → **Actions**.
-3. Under **Repository secrets**, click **New repository secret** to add the following:
+1. Create a bot with [@BotFather](https://t.me/BotFather) on Telegram and copy the **Bot Token**.
+2. Get your **Chat ID** from [@userinfobot](https://t.me/userinfobot) or similar.
+3. Add both values as environment variables on Render (see below).
 
-- `TELEGRAM_TOKEN`: Your bot token obtained from [@BotFather](https://t.me/BotFather) on Telegram.
-- `TELEGRAM_CHAT_ID`: Your personal or group Chat ID where the bot should send the messages (you can get this from [@userinfobot](https://t.me/userinfobot) or similar).
-
-The workflow automatically securely reads these secrets and will format a detailed down alert, including:
-
+Alerts include:
 - Site URL
-- Error Code / Timeout Status
+- Status (DOWN / Timeout)
 - UTC Timestamp
+
+---
+
+## 🔑 Environment Variables
+
+Set these in the **Render Dashboard** → your service → **Environment**:
+
+| Variable           | Required | Description                                                                 |
+| ------------------ | -------- | --------------------------------------------------------------------------- |
+| `SELF_URL`         | **Yes**  | Your Render service's own URL (e.g. `https://render-keep-alive-xxxx.onrender.com`). Enables self-ping to stay alive. |
+| `TELEGRAM_TOKEN`   | Optional | Telegram bot token from [@BotFather](https://t.me/BotFather).              |
+| `TELEGRAM_CHAT_ID` | Optional | Chat ID where alerts are sent.                                             |
+| `PORT`             | Auto     | Render sets this automatically. No need to configure.                       |
+
+> **Tip:** For local development, create a `.env` file in the project root. The script loads it automatically.
 
 ---
 
 ## 🚀 Usage
 
-Once the `sites.json` is configured, and the Telegram Secrets are placed:
+Once deployed and configured, the service runs fully autonomously:
 
-### Automated Runs
+- **Automatic** — Pings all sites from `sites.json` every **10 minutes**, forever.
+- **Self-sustaining** — The `SELF_URL` self-ping keeps the pinger itself from sleeping on Render's free tier.
+- **Health Check** — Visit your service URL in a browser to see a live JSON report:
 
-The workflow is scheduled to execute every **10 minutes** using the trigger:
-
-```yaml
-on:
-  schedule:
-    - cron: "*/10 * * * *"
-```
-
-_Note: GitHub Actions cron scheduling is subject to queue times, so checks might not occur exactly on the 10th-minute mark._
-
-### Manual Check
-
-You can trigger a manual check anytime:
-
-1. Go to the **Actions** tab in your repository.
-2. Select **🚀 Uptime Pinger** from the left sidebar.
-3. Click **Run workflow**.
+  ```json
+  {
+    "status": "alive",
+    "timestamp": "1970-01-01 00:00:00 UTC",
+    "cycle": 42,
+    "total_sites": 3,
+    "up": 3,
+    "down": 0,
+    "results": [
+      { "url": "https://your-app.onrender.com", "status": "up", "code": 200, "latency_ms": 285.3 },
+      { "url": "https://app.onrender.com", "status": "up", "code": 200, "latency_ms": 312.7 }
+    ]
+  }
+  ```
 
 ---
 
 ## ⚙️ How It Works
 
-1. **Parsing List**: A preparation job runs first, securely reading the `sites.json` file and safely outputting it using `jq` to serialize it as a JSON string to a GitHub output parameter.
-2. **Matrix Strategy**: The serialized string is dynamically fed into a GitHub matrix strategy `fromJson()`. This spawns up to 10 parallel jobs, each responsible for pinging exactly one site.
-3. **Ping & Retry**: A small Bash script pings the endpoint taking a max time `-m 10` using `curl`.
-   - If HTTP 2XX is returned, the check passes.
-   - If it drops or times out, the command pauses for 5 seconds and tries again (max 2 retries).
-4. **Alert Trigger**: If all attempts fail, the step cleanly exits, passing an explicit `code` and `status=down` payload to the next step.
-5. **Telegram JSON Payload**: The final step conditionally runs if the app is marked 'down'. It maps the alert parameters using `jq` into safely escaped structural HTML formatted JSON for Telegram's SendMessage webhook API.
+1. **Startup** — `Ping.py` starts a web server on the port Render provides and spawns a background pinger thread.
+2. **Load Sites** — Reads all URLs from `sites.json` and appends `SELF_URL` (if set) to the list.
+3. **Concurrent Ping** — Every 10 minutes, all sites are pinged **simultaneously** using `ThreadPoolExecutor`. Each request uses a GET method with a 10-second timeout.
+4. **Retry on Failure** — If a site fails, it retries up to **2 more times** with a 5-second delay between attempts.
+5. **Alert** — If all retries fail, a Telegram alert is sent with the site URL, status, and timestamp.
+6. **Self-Ping** — The pinger's own URL is included in the ping list, creating an inbound request that resets Render's 15-minute inactivity timer.
+7. **Health Endpoint** — The web server responds to any incoming request with a JSON report of the latest ping cycle results.
+
+---
+
+## 📂 Project Structure
+
+```
+Render-Keep-Alive/
+├── Ping.py              # Main script — web server + background pinger
+├── sites.json           # List of URLs to keep alive
+├── .env.example         # Example environment variables
+├── Screenshots/         # README screenshots
+│   ├── Logs.png
+│   └── TelegramNotification.png
+├── LICENSE              # MIT License
+└── README.md            # This file
+```
 
 ---
 
